@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'principal' }
+    agent { label 'master' }
 
     stages {
         stage('Perform Preparation') {
