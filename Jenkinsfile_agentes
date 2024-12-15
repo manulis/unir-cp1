@@ -10,11 +10,7 @@ pipeline {
                         echo "Preparation Agent"
                         whoami
                         hostname
-                    '''
-                    echo "Get Code"
-                    sh '''
-                        git clone https://github.com/manulis/unir-cp1.git
-                        ls -la
+                        echo ${WORKSPACE}
                     '''
                     stash includes: '**', name: 'workspace-root'
                 }
@@ -27,6 +23,7 @@ pipeline {
                     echo "Build Agent"
                     whoami
                     hostname
+                    echo ${WORKSPACE}
                 '''
                 echo 'This is python no build needed'
                 unstash 'workspace-root'
@@ -43,6 +40,7 @@ pipeline {
                                 echo "Unit Test Agent"
                                 whoami
                                 hostname
+                                echo ${WORKSPACE}
                             '''
                             unstash 'workspace-root'
                             sh '''
@@ -65,6 +63,7 @@ pipeline {
                                 echo "Rest Test Agent"
                                 whoami
                                 hostname
+                                echo ${WORKSPACE}
                             '''
                             unstash 'workspace-root'
                             sh '''
