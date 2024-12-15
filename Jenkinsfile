@@ -24,7 +24,6 @@ pipeline {
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             sh '''
-                                set -e
                                 if [ ! -d "test/unit" ]; then
                                     echo "Directory test/unit does not exist"
                                     exit 1
@@ -39,7 +38,6 @@ pipeline {
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             sh '''
-                                set -e
                                 if [ ! -d "test/unit" ]; then
                                     echo "Directory test/unit does not exist"
                                     exit 1
