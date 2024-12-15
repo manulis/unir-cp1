@@ -33,8 +33,6 @@ pipeline {
                 sh 'ls -la'
             }
         }
-
-
         stage('Unit') {
             agent { label 'agent1' }
             steps {
@@ -95,7 +93,6 @@ pipeline {
                 }
             }
         }
-            
         
         stage('Result') {
             steps {
