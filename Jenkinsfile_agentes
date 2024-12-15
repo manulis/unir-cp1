@@ -1,9 +1,9 @@
 pipeline {
-    agent { node 'master' }
-    
+    agent any
+
     stages {
         stage('Perform Preparation') {
-            agent { node 'master' }
+            agent any
 
             steps {
                 script {
@@ -22,7 +22,7 @@ pipeline {
             }
         }
         stage('Build') {
-            agent { node 'master' }
+            agent any
 
             steps {
                 sh '''
