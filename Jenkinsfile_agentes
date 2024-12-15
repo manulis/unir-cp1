@@ -33,70 +33,70 @@ pipeline {
                 sh 'ls -la'
             }
         }
-        stage('Tests') {
-            parallel {
-                stage('Unit') {
-                    agent { label 'agent1' }
-                    steps {
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            sh '''
-                                echo "[AGENT] Unit Tests"
-                                whoami
-                                hostname
-                            '''
-                            unstash 'workspace-root'
-                            sh '''
-                                if [ ! -d "test/unit" ]; then
-                                    echo "Directory test/unit does not exist"
-                                    exit 1
-                                fi
-                                export PYTHONPATH=.
-                                pytest --junitxml=result-unit.xml test/unit
-                            '''
-                            stash includes: 'result-unit.xml', name: 'unit-results'
-                        }
-                    }
-                }
-                stage('Rest') {
-                    agent { label 'agent2' }
-                    steps {
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            sh '''
-                                echo "[AGENT] REST Tests"
-                                whoami
-                                hostname
-                            '''
-                            unstash 'workspace-root'
-                            sh '''
-                                if [ ! -d "test/unit" ]; then
-                                    echo "Directory test/unit does not exist"
-                                    exit 1
-                                fi
-                                
-                                while lsof -i:9090 > /dev/null; do
-                                    echo "Esperando a que el puerto 9090 esté libre..."
-                                    sleep 2
-                                done
-                                
-                                export FLASK_APP=app/api.py
-                                flask run &
-                                java -jar /usr/local/bin/wiremock.jar --port 9090 --verbose --root-dir test/wiremock &
-                                
-                                until curl --silent --max-time 10 http://localhost:9090 > /dev/null; do
-                                    echo "Esperando a que WireMock esté listo..."
-                                    sleep 2
-                                done
-                                
-                                echo "WireMock está listo, comenzando las pruebas"
-                                pytest --junitxml=result-rest.xml test/rest
-                            '''
 
-                            stash includes: 'result-rest.xml', name: 'rest-results'
-                        }
-                    }
+
+        stage('Unit') {
+            agent { label 'agent1' }
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '''
+                        echo "[AGENT] Unit Tests"
+                        whoami
+                        hostname
+                    '''
+                    unstash 'workspace-root'
+                    sh '''
+                        if [ ! -d "test/unit" ]; then
+                            echo "Directory test/unit does not exist"
+                            exit 1
+                        fi
+                        export PYTHONPATH=.
+                        pytest --junitxml=result-unit.xml test/unit
+                    '''
+                    stash includes: 'result-unit.xml', name: 'unit-results'
                 }
             }
         }
+        stage('Rest') {
+            agent { label 'agent2' }
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '''
+                        echo "[AGENT] REST Tests"
+                        whoami
+                        hostname
+                    '''
+                    unstash 'workspace-root'
+                    sh '''
+                        if [ ! -d "test/unit" ]; then
+                            echo "Directory test/unit does not exist"
+                            exit 1
+                        fi
+                        
+                        while lsof -i:9090 > /dev/null; do
+                            echo "Esperando a que el puerto 9090 esté libre..."
+                            sleep 2
+                        done
+                        
+                        export FLASK_APP=app/api.py
+                        flask run &
+                        java -jar /usr/local/bin/wiremock.jar --port 9090 --verbose --root-dir test/wiremock &
+                        
+                        until curl --silent --max-time 10 http://localhost:9090 > /dev/null; do
+                            echo "Esperando a que WireMock esté listo..."
+                            sleep 2
+                        done
+                        
+                        echo "WireMock está listo, comenzando las pruebas"
+                        pytest --junitxml=result-rest.xml test/rest
+                    '''
+
+                    stash includes: 'result-rest.xml', name: 'rest-results'
+                }
+            }
+        }
+            
+        
         stage('Result') {
             steps {
                 unstash 'unit-results'
