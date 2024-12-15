@@ -3,26 +3,48 @@ pipeline {
 
     stages {
         stage('Perform Preparation') {
+            agent any
             steps {
                 script {
+                    sh '''
+                        echo "[AGENT] Preparación"
+                        whoami
+                        hostname
+                    '''
                     echo "Get Code"
                     sh '''
                         git clone https://github.com/manulis/unir-cp1.git
-                        ls
+                        ls -la
                     '''
+                    stash includes: '**', name: 'workspace-root'
                 }
             }
         }
         stage('Build') {
+            agent any
             steps {
+                sh '''
+                    echo "[AGENT] Build"
+                    whoami
+                    hostname
+                '''
                 echo 'This is python no build needed'
+                unstash 'workspace-root'
+                sh 'ls -la'
             }
         }
         stage('Tests') {
             parallel {
                 stage('Unit') {
+                    agent { label 'agent1' }
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            sh '''
+                                echo "[AGENT] Unit Tests"
+                                whoami
+                                hostname
+                            '''
+                            unstash 'workspace-root'
                             sh '''
                                 if [ ! -d "test/unit" ]; then
                                     echo "Directory test/unit does not exist"
@@ -31,12 +53,20 @@ pipeline {
                                 export PYTHONPATH=.
                                 pytest --junitxml=result-unit.xml test/unit
                             '''
+                            stash includes: 'result-unit.xml', name: 'unit-results'
                         }
                     }
                 }
                 stage('Rest') {
+                    agent { label 'agent2' }
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            sh '''
+                                echo "[AGENT] REST Tests"
+                                whoami
+                                hostname
+                            '''
+                            unstash 'workspace-root'
                             sh '''
                                 if [ ! -d "test/unit" ]; then
                                     echo "Directory test/unit does not exist"
@@ -60,6 +90,8 @@ pipeline {
                                 echo "WireMock está listo, comenzando las pruebas"
                                 pytest --junitxml=result-rest.xml test/rest
                             '''
+
+                            stash includes: 'result-rest.xml', name: 'rest-results'
                         }
                     }
                 }
@@ -67,6 +99,8 @@ pipeline {
         }
         stage('Result') {
             steps {
+                unstash 'unit-results'
+                unstash 'rest-results'
                 junit "result*.xml"
             }
         }
