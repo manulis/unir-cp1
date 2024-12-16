@@ -47,10 +47,18 @@ pipeline {
                                 flask run &
                                 java -jar /usr/local/bin/wiremock.jar --port 9090 --verbose --root-dir test/wiremock &
                                 
-                                until curl --silent --max-time 10 http://localhost:5000 > /dev/null && curl --silent --max-time 10 http://localhost:9090 > /dev/null; do
-                                    echo "Waiting for Flask (port 5000) and WireMock (port 9090) to be ready..."
+
+                                until curl --silent --max-time 10 http://localhost:5000 > /dev/null; do
+                                    echo "Waiting for Flask (port 5000) to be ready..."
                                     sleep 2
                                 done
+
+    
+                                until curl --silent --max-time 10 http://localhost:9090 > /dev/null; do
+                                    echo "Waiting for WireMock (port 9090) to be ready..."
+                                    sleep 2
+                                done
+
                                 
                                 echo "Flash and Wiremock are ready, starting the tests"
                                 pytest --junitxml=result-rest.xml test/rest
