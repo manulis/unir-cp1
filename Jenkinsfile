@@ -43,8 +43,8 @@ pipeline {
                                     exit 1
                                 fi
                                 
-                                while lsof -i:9090 > /dev/null; do
-                                    echo "Esperando a que el puerto 9090 esté libre..."
+                                while lsof -i:9090 > /dev/null && lsof -i:5000 > /dev/null; do
+                                    echo "Waiting for port 9090 and 5000 to be free..."
                                     sleep 2
                                 done
                                 
@@ -52,8 +52,8 @@ pipeline {
                                 flask run &
                                 java -jar /usr/local/bin/wiremock.jar --port 9090 --verbose --root-dir test/wiremock &
                                 
-                                until curl --silent --max-time 10 http://localhost:9090 > /dev/null; do
-                                    echo "Esperando a que WireMock esté listo..."
+                                until curl --silent --max-time 10 http://localhost:5000 > /dev/null && curl --silent --max-time 10 http://localhost:9090 > /dev/null; do
+                                    echo "Waiting for Flask (port 5000) and WireMock (port 9090) to be ready..."
                                     sleep 2
                                 done
                                 
