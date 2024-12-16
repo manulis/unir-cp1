@@ -71,12 +71,7 @@ pipeline {
                                     echo "Directory test/rest does not exist"
                                     exit 1
                                 fi
-                                
-                                while lsof -i:9090 > /dev/null && lsof -i:5000 > /dev/null; do
-                                    echo "Waiting for port 9090 and 5000 to be free..."
-                                    sleep 2
-                                done
-                                
+
                                 export FLASK_APP=app/api.py
                                 flask run &
                                 java -jar /usr/local/bin/wiremock.jar --port 9090 --verbose --root-dir test/wiremock &
