@@ -38,8 +38,8 @@ pipeline {
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             sh '''
-                                if [ ! -d "test/unit" ]; then
-                                    echo "Directory test/unit does not exist"
+                                if [ ! -d "test/rest" ]; then
+                                    echo "Directory test/rest does not exist"
                                     exit 1
                                 fi
                                 
@@ -57,7 +57,7 @@ pipeline {
                                     sleep 2
                                 done
                                 
-                                echo "WireMock está listo, comenzando las pruebas"
+                                echo "Flash and Wiremock are ready, starting the tests"
                                 pytest --junitxml=result-rest.xml test/rest
                             '''
                         }
