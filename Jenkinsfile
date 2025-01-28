@@ -70,9 +70,6 @@ pipeline {
                     }
                 }
             }
-            steps{
-                junit "result*.xml"
-            }
         }
                 
         stage('Coverage') {
@@ -132,6 +129,8 @@ pipeline {
             }
         }
 
+
+        
         stage('Performance') {
             steps {
                 sh '''
@@ -143,6 +142,11 @@ pipeline {
             }
         }
 
+        stage('Result') {
+            steps {
+                junit "result*.xml"
+            }
+        }
     }
 
     post {
