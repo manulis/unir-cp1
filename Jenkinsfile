@@ -13,11 +13,13 @@ pipeline {
                 }
             }
         }
+
         stage('Build') {
             steps {
                 echo 'This is python no build needed'
             }
         }
+
         stage('Tests') {
             parallel {
                 stage('Unit') {
@@ -64,15 +66,83 @@ pipeline {
                                 pytest --junitxml=result-rest.xml test/rest
                             '''
                         }
+                        
                     }
                 }
             }
-        }
-        stage('Result') {
-            steps {
+            steps{
                 junit "result*.xml"
             }
         }
+                
+        stage('Coverage') {
+            steps {
+
+                sh '''
+                    python3 -m coverage run --branch --source=app --omit=app/__init__.py,app/api.py -m pytest test/unit
+                    python3 -m coverage xml -o coverage.xml
+                '''
+
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    cobertura coberturaReportFile: 'coverage.xml',  
+                             conditionalCoverageTargets: '100,0,85', 
+                             lineCoverageTargets: '100,0,90'
+                }
+            }
+        }
+        
+        stage('Static') {
+            steps {
+
+                sh '''
+                    python3 -m flake8 --exit-zero --format=pylint app > flake8.out
+                '''
+
+                recordIssues(
+                    tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], 
+                    qualityGates: [
+                        [threshold: 10, type: 'TOTAL', unstable: true], 
+                        [threshold: 11, type: 'TOTAL', unstable: false]
+                    ]
+                )
+            }
+        }
+        
+        stage('Security') {
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '''
+                        python3 -m bandit -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: {severity}: {test_id}: {msg}"
+                        if [ ! -s bandit.out ]; then
+                            echo "Bandit output file is empty or missing"
+                            exit 1
+                        fi
+                        echo "Bandit output:"
+                        cat bandit.out
+                    '''
+                }
+                recordIssues(
+                    qualityGates: [
+                        [threshold: 4, type: 'TOTAL', unstable: true],
+                        [threshold: 8, type: 'TOTAL', unstable: true]
+                    ],
+                    tools: [pyLint(pattern: 'bandit.out', name: 'Bandit')]
+                )
+                
+            }
+        }
+
+        stage('Performance') {
+            steps {
+                sh '''
+                    export FLASK_APP=app/api.py
+                    flask run &
+                   /opt/apache-jmeter-5.5/bin/jmeter -n -t test/jmeter/flask.jmx -l flask.jtl
+                '''
+                perfReport sourceDataFiles: 'flask.jtl' 
+            }
+        }
+
     }
 
     post {
