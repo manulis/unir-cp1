@@ -14,12 +14,6 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                echo 'This is python no build needed'
-            }
-        }
-
         stage('Tests') {
             parallel {
                 stage('Unit') {
@@ -32,6 +26,7 @@ pipeline {
                                 fi
                                 export PYTHONPATH=.
                                 pytest --junitxml=result-unit.xml test/unit
+                                junit "result-unit.xml"
                             '''
                         }
                     }
@@ -64,6 +59,7 @@ pipeline {
                                 
                                 echo "Flash and Wiremock are ready, starting the tests"
                                 pytest --junitxml=result-rest.xml test/rest
+                                junit "result-rest.xml"
                             '''
                         }
                         
@@ -132,12 +128,6 @@ pipeline {
                    /opt/apache-jmeter-5.5/bin/jmeter -n -t test/jmeter/flask.jmx -l flask.jtl
                 '''
                 perfReport sourceDataFiles: 'flask.jtl' 
-            }
-        }
-
-        stage('Result') {
-            steps {
-                junit "result*.xml"
             }
         }
     }
