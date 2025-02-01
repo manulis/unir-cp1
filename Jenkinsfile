@@ -26,7 +26,6 @@ pipeline {
                                 fi
                                 export PYTHONPATH=.
                                 pytest --junitxml=result-unit.xml test/unit
-                                junit "result-unit.xml"
                             '''
                         }
                     }
@@ -59,11 +58,15 @@ pipeline {
                                 
                                 echo "Flash and Wiremock are ready, starting the tests"
                                 pytest --junitxml=result-rest.xml test/rest
-                                junit "result-rest.xml"
                             '''
                         }
                         
                     }
+                }
+            }
+            post {
+                always {
+                    junit '**/result-*.xml'
                 }
             }
         }
